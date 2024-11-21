@@ -34,13 +34,13 @@ fi
 # Run mask extraction
 if [ ! -f "$path" ]; then
   echo "Running extract_mask.py in $path"
-  python3 $project_dir/scripts/extract_img.py --video_path $path/images --output_folder $path/masks
+  python3 $project_dir/scripts/extract_mask.py --video_path $path/images --output_folder $path/masks
 fi
 
 # Run hamer
 if [ ! -f "$path" ]; then
   echo "Running hamer in $path"
-  python3 $project_dir/demo.py --img_folder $path --out_folder $path --batch_size=48 --side_view --save_mesh --full_frame
+  python3 $project_dir/demo.py --img_folder $path/images --out_folder $path --batch_size=48 --side_view --save_mesh --full_frame
 fi
 
 # if [ ! -d "$path/masks" ]; then
