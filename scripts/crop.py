@@ -58,11 +58,13 @@ def create_hand_centered_video(input_video, output_video, output_size=(1536, 153
 
                 padded_frame = cv2.resize(padded_frame, output_size)
                 out.write(padded_frame)
-                break 
-        else:
+                break #only for one hand detection
+             
+        #Here we are not adding frames that are without hand     
+        # else:
 
-            resized_frame = cv2.resize(frame, output_size)
-            out.write(resized_frame)
+        #     resized_frame = cv2.resize(frame, output_size)
+        #     out.write(resized_frame)
 
 
     cap.release()
