@@ -150,6 +150,7 @@ def main():
                 img_fn, _ = os.path.splitext(os.path.basename(img_path))
                 person_id = int(batch['personid'][n])
                 white_img = (torch.ones_like(batch['img'][n]).cpu() - DEFAULT_MEAN[:,None,None]/255) / (DEFAULT_STD[:,None,None]/255)
+                black_img = (torch.zeros_like(batch['img'][n]).cpu() - DEFAULT_MEAN[:,None,None]/255) / (DEFAULT_STD[:,None,None]/255)
                 input_patch = batch['img'][n].cpu() * (DEFAULT_STD[:,None,None]/255) + (DEFAULT_MEAN[:,None,None]/255)
                 input_patch = input_patch.permute(1,2,0).numpy()
 
@@ -159,19 +160,32 @@ def main():
                                         mesh_base_color=LIGHT_BLUE,
                                         scene_bg_color=(1, 1, 1),
                                         )
+                if not os.path.exists(os.path.join(args.out_folder, "regression_img")):
+                    os.makedirs(os.path.join(args.out_folder, "regression_img"))
+                    print(os.path.join(args.out_folder, "regression_img"))
+                regression_name = f"{img_fn}_{person_id}_regress.png"
+                cv2.imwrite(os.path.join(os.path.join(args.out_folder, "regression_img"), regression_name), 255*regression_img[:, :, ::-1])
 
                 if args.side_view:
                     side_img = renderer(out['pred_vertices'][n].detach().cpu().numpy(),
                                             out['pred_cam_t'][n].detach().cpu().numpy(),
-                                            white_img,
+                                            black_img,
                                             mesh_base_color=LIGHT_BLUE,
                                             scene_bg_color=(1, 1, 1),
-                                            side_view=True)
+                                            side_view=False)
                     final_img = np.concatenate([input_patch, regression_img, side_img], axis=1)
                 else:
                     final_img = np.concatenate([input_patch, regression_img], axis=1)
-
-                cv2.imwrite(os.path.join(args.out_folder, f'{img_fn}_{person_id}.png'), 255*final_img[:, :, ::-1])
+                
+                if not os.path.exists(os.path.join(args.out_folder, "side_img")):
+                    os.makedirs(os.path.join(args.out_folder, "side_img"))
+                side_name = f'{img_fn}_{person_id}_side.png'
+                cv2.imwrite(os.path.join(os.path.join(args.out_folder, "side_img"), side_name), 255*side_img[:, :, ::-1])
+                
+                if not os.path.exists(os.path.join(args.out_folder, "final")):
+                    os.makedirs(os.path.join(args.out_folder, "final"))
+                final_name = f'{img_fn}_{person_id}.png'
+                cv2.imwrite(os.path.join(os.path.join(args.out_folder, "final"), final_name), 255*final_img[:, :, ::-1])
 
                 # Add all verts and cams to list
                 verts = out['pred_vertices'][n].detach().cpu().numpy()
@@ -186,7 +200,10 @@ def main():
                 if args.save_mesh:
                     camera_translation = cam_t.copy()
                     tmesh = renderer.vertices_to_trimesh(verts, camera_translation, LIGHT_BLUE, is_right=is_right)
-                    tmesh.export(os.path.join(args.out_folder, f'{img_fn}_{person_id}.obj'))
+                    
+                    if not os.path.exists(os.path.join(args.out_folder, "mesh")):
+                        os.makedirs(os.path.join(args.out_folder, "mesh"))
+                    tmesh.export(os.path.join(os.path.join(args.out_folder, "mesh"), f'{img_fn}_{person_id}.obj'))
 
         # Render front view
         if args.full_frame and len(all_verts) > 0:
@@ -202,7 +219,10 @@ def main():
             input_img = np.concatenate([input_img, np.ones_like(input_img[:,:,:1])], axis=2) # Add alpha channel
             input_img_overlay = input_img[:,:,:3] * (1-cam_view[:,:,3:]) + cam_view[:,:,:3] * cam_view[:,:,3:]
 
-            cv2.imwrite(os.path.join(args.out_folder, f'{img_fn}_all.jpg'), 255*input_img_overlay[:, :, ::-1])
+            if not os.path.exists(os.path.join(args.out_folder, "all")):
+                os.makedirs(os.path.join(args.out_folder, "all"))
+            all_name = f'{img_fn}_all.jpg'
+            cv2.imwrite(os.path.join(os.path.join(args.out_folder, "all"), all_name), 255*input_img_overlay[:, :, ::-1])
 
 if __name__ == '__main__':
     main()
