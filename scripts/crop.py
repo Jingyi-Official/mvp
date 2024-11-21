@@ -4,7 +4,7 @@ import numpy as np
 import os
 import argparse
 
-def create_hand_centered_video(input_video, output_video, output_size=(1024, 1024)):
+def create_hand_centered_video(input_video, output_video, output_size=(1536, 1536)):
  
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5)
@@ -76,7 +76,7 @@ def create_hand_centered_video(input_video, output_video, output_size=(1024, 102
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Crop video")
-    parser.add_argument("--videoinput_video_path", type=str, required=True, help="MP4 path")
+    parser.add_argument("--input_video", type=str, required=True, help="MP4 path")
     parser.add_argument("--output_video", type=str, required=True, help="output path")
     args = parser.parse_args()
     create_hand_centered_video(args.input_video, args.output_video)

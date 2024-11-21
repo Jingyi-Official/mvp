@@ -22,7 +22,7 @@ echo $project_dir # /mnt/ssd/jingyi/Projects/hamer
 # Run crop
 if [ ! -f "$path" ]; then
   echo "Running crop.py in $path"
-  python3 $project_dir/scripts/crop.py --video_path $path/video.mp4 --output_folder $path/video_crop.mp4
+  python3 $project_dir/scripts/crop.py --input_video $path/video.mp4 --output_video $path/video_crop.mp4
 fi
 
 # Run image extraction
