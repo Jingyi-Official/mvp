@@ -12,12 +12,20 @@ if [ ! -d "$1" ]; then
   exit 1
 fi
 
+#check the number of hands
+if [ -z "$2" ]; then
+  echo "Please provide the number of hands."
+  exit 1
+fi
+
+n_hands="$2"
 path=$(readlink -f "$1")
 parent_dir=$(dirname "$path")
 project_dir=$(dirname "$parent_dir")
 echo $path # /mnt/ssd/jingyi/Projects/hamer/data/jingyi
 echo $parent_dir # /mnt/ssd/jingyi/Projects/hamer/data
 echo $project_dir # /mnt/ssd/jingyi/Projects/hamer
+echo "Number of hands: $n_hands"
 
 # Run crop
 if [ ! -f "$path" ]; then
@@ -40,7 +48,7 @@ fi
 # Run mask extraction
 if [ ! -f "$path" ]; then
   echo "Running extract_mask.py in $path"
-  python3 $project_dir/scripts/extract_mask.py --input_dir $path/images --output_dir $path/masks
+  python3 $project_dir/scripts/extract_mask.py --input_dir $path/images --output_dir $path/masks --n_hands $n_hands
 fi
 
 # if [ ! -d "$path/masks" ]; then
