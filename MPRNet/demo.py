@@ -61,6 +61,7 @@ img_multiple_of = 8
 
 for file_ in files:
     img = Image.open(file_).convert('RGB')
+    print('img uploaded')
     # input_ = TF.to_tensor(img).unsqueeze(0).cuda()
     input_ = TF.to_tensor(img).unsqueeze(0)
 
@@ -73,6 +74,7 @@ for file_ in files:
 
     with torch.no_grad():
         restored = model(input_)
+        print('model run')
     restored = restored[0]
 
     f = os.path.splitext(os.path.split(file_)[-1])[0]
