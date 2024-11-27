@@ -77,6 +77,10 @@ for file_ in files:
         print('model run')
     restored = restored[0]
 
+    #From [128,1536,1536] goes to [3,1536,1536]
+    restored = restored.sum(dim=0, keepdim=True).expand(3, -1, -1) / 128.0 
+
+
     f = os.path.splitext(os.path.split(file_)[-1])[0]
     torch.save(restored, os.path.join(out_dir, f+'.pt'))
 
