@@ -118,7 +118,7 @@ class Encoder(nn.Module):
         if (encoder_outs is not None) and (decoder_outs is not None):
             enc3 = enc3 + self.csff_enc3(encoder_outs[2]) + self.csff_dec3(decoder_outs[2])
         
-        return [enc1, enc2, enc3]
+        return [enc1, enc2, enc3] , x
 
 class Decoder(nn.Module):
     def __init__(self, n_feat, kernel_size, reduction, act, bias, scale_unetfeats):
@@ -287,10 +287,10 @@ class MPRNet(nn.Module):
         x1rbot = self.shallow_feat1(x1rbot_img)
         
         ## Process features of all 4 patches with Encoder of Stage 1
-        feat1_ltop = self.stage1_encoder(x1ltop)
-        feat1_rtop = self.stage1_encoder(x1rtop)
-        feat1_lbot = self.stage1_encoder(x1lbot)
-        feat1_rbot = self.stage1_encoder(x1rbot)
+        feat1_ltop, z1 = self.stage1_encoder(x1ltop)
+        feat1_rtop, z2 = self.stage1_encoder(x1rtop)
+        feat1_lbot, z3 = self.stage1_encoder(x1lbot)
+        feat1_rbot, z4 = self.stage1_encoder(x1rbot)
 
         ## Concat deep features
         feat1_top = [torch.cat((k,v), 3) for k,v in zip(feat1_ltop,feat1_rtop)]
@@ -318,32 +318,32 @@ class MPRNet(nn.Module):
         x2bot_cat = self.concat12(torch.cat([x2bot, x2bot_samfeats], 1))
 
         ## Process features of both patches with Encoder of Stage 2
-        feat2_top = self.stage2_encoder(x2top_cat, feat1_top, res1_top)
-        feat2_bot = self.stage2_encoder(x2bot_cat, feat1_bot, res1_bot)
+        feat2_top, z5 = self.stage2_encoder(x2top_cat, feat1_top, res1_top)
+        feat2_bot, z6 = self.stage2_encoder(x2bot_cat, feat1_bot, res1_bot)
 
         ## Concat deep features
-        feat2 = [torch.cat((k,v), 2) for k,v in zip(feat2_top,feat2_bot)]
+        # feat2 = [torch.cat((k,v), 2) for k,v in zip(feat2_top,feat2_bot)]
 
-        ## Pass features through Decoder of Stage 2
-        res2 = self.stage2_decoder(feat2)
+        # ## Pass features through Decoder of Stage 2
+        # res2 = self.stage2_decoder(feat2)
 
-        ## Apply SAM
-        x3_samfeats, stage2_img = self.sam23(res2[0], x3_img)
+        # ## Apply SAM
+        # x3_samfeats, stage2_img = self.sam23(res2[0], x3_img)
 
 
         ##-------------------------------------------
         ##-------------- Stage 3---------------------
         ##-------------------------------------------
         ## Compute Shallow Features
-        x3     = self.shallow_feat3(x3_img)
+        # x3     = self.shallow_feat3(x3_img)
 
-        ## Concatenate SAM features of Stage 2 with shallow features of Stage 3
-        x3_cat = self.concat23(torch.cat([x3, x3_samfeats], 1))
+        # ## Concatenate SAM features of Stage 2 with shallow features of Stage 3
+        # x3_cat = self.concat23(torch.cat([x3, x3_samfeats], 1))
         
-        # x3_cat = self.stage3_orsnet(x3_cat, feat2, res2)
+        # # x3_cat = self.stage3_orsnet(x3_cat, feat2, res2)
 
         # stage3_img = self.tail(x3_cat)
 
         # return [stage3_img+x3_img, stage2_img, stage1_img]
 
-        return x3_cat
+        return z6
