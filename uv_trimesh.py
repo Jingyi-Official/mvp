@@ -18,4 +18,5 @@ uv = mesh.vertices[:, :2]
 fig, ax = plt.subplots()
 ax.scatter(uv[:, 0], uv[:, 1], s=2)
 ax.axis('off')
-plt.savefig(args.output_uv_path, format='jpg', bbox_inches='tight', pad_inches=0)
+fig.set_size_inches(256 / 100, 256 / 100)
+fig.savefig(args.output_uv_path, format='jpg', pad_inches=0, dpi=100)
