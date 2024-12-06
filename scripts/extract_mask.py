@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from segment_anything import sam_model_registry, SamPredictor
 import os
+import argparse
 
 #SAM model
 #you need to download this first!!
@@ -19,24 +20,30 @@ predictor = SamPredictor(sam)
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(static_image_mode=True, max_num_hands=2, min_detection_confidence=0.5)
 
-def extract_hand_points(image):
+def extract_hand_points(image_path):
     """
    hand landmarks from the image using mediapipe
 
     """
-    rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    results = hands.process(rgb_image)
+    keypoint_path = f"{os.path.basename(image_path).split('.')[0]}.npy"
+    keypoint_path = os.path.dirname(os.path.dirname(image_path)) + "/keypoints/" + keypoint_path
 
-    hand_points = []
-    if results.multi_hand_landmarks:
-        height, width, _ = image.shape
-        for hand_landmarks in results.multi_hand_landmarks:
-            for lm in hand_landmarks.landmark:
+    hand_points = np.load(keypoint_path)[0][:, 0:2]
 
-                x, y = int(lm.x * width), int(lm.y * height)
-                hand_points.append((x, y))
-        
     return hand_points
+
+def extract_bboex(image_path):
+    """
+   hand landmarks from the image using mediapipe
+
+    """
+    bboxes_path = f"{os.path.basename(image_path).split('.')[0]}.npy"
+    bboxes_path = os.path.dirname(os.path.dirname(image_path)) + "/bboxes/" + bboxes_path
+
+    bboxes = np.load(bboxes_path)[0]
+
+    return bboxes
+
 
 def segment_hands_with_sam(image_path, output_path, n_hands):
     """
@@ -48,10 +55,11 @@ def segment_hands_with_sam(image_path, output_path, n_hands):
         print(f"Cannot read: {image_path}")
         return
 
-    # hand points using mediapipe
-    hand_points = extract_hand_points(image)
+    # hand points using vit
+    hand_points = extract_hand_points(image_path)
+    input_box = extract_bboex(image_path)
 
-    if not hand_points:
+    if not hand_points.all():
         print(f"no hands detected in {image_path}. skipping...")
         return
 
@@ -69,11 +77,11 @@ def segment_hands_with_sam(image_path, output_path, n_hands):
     masks, _, _ = predictor.predict(
         point_coords=input_points,
         point_labels=input_labels,
+        box=input_box,
         multimask_output=multimask_output
     )
     if n_hands ==1:
-
-        mask = masks[0]
+        mask = masks[2]
         mask = (mask * 255).astype(np.uint8)
 
     else:
@@ -82,7 +90,8 @@ def segment_hands_with_sam(image_path, output_path, n_hands):
             mask[m > 0] = 255
         mask = mask.astype(np.uint8)
 
-# Saveing
+    # get largest components
+    # Saveing
     cv2.imwrite(output_path, mask)
     print(f"mask saved to: {output_path}")
 

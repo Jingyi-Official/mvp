@@ -94,6 +94,12 @@ def main():
 
         bboxes = []
         is_right = []
+        keypes = []
+        if not os.path.exists(os.path.join(args.out_folder, "keypoints")):
+            os.makedirs(os.path.join(args.out_folder, "keypoints"))
+
+        if not os.path.exists(os.path.join(args.out_folder, "bboxes")):
+            os.makedirs(os.path.join(args.out_folder, "bboxes"))
 
         # Use hands based on hand keypoint detections
         for vitposes in vitposes_out:
@@ -101,24 +107,29 @@ def main():
             right_hand_keyp = vitposes['keypoints'][-21:]
 
             # Rejecting not confident detections
-            keyp = left_hand_keyp
-            valid = keyp[:,2] > 0.5
-            if sum(valid) > 3:
-                bbox = [keyp[valid,0].min(), keyp[valid,1].min(), keyp[valid,0].max(), keyp[valid,1].max()]
-                bboxes.append(bbox)
-                is_right.append(0)
+            # keyp = left_hand_keyp
+            # valid = keyp[:,2] > 0.5
+            # if sum(valid) > 3:
+            #     bbox = [keyp[valid,0].min(), keyp[valid,1].min(), keyp[valid,0].max(), keyp[valid,1].max()]
+            #     bboxes.append(bbox)
+            #     is_right.append(0)
             keyp = right_hand_keyp
             valid = keyp[:,2] > 0.5
             if sum(valid) > 3:
                 bbox = [keyp[valid,0].min(), keyp[valid,1].min(), keyp[valid,0].max(), keyp[valid,1].max()]
                 bboxes.append(bbox)
                 is_right.append(1)
+            keypes.append(keyp)
+        keypes = np.array(keypes)
+        np.save(os.path.join(os.path.join(args.out_folder, "keypoints"), f"{os.path.basename(img_path).split('.')[0]}.npy"), keypes)
 
         if len(bboxes) == 0:
             continue
 
         boxes = np.stack(bboxes)
         right = np.stack(is_right)
+        np.save(os.path.join(os.path.join(args.out_folder, "bboxes"), f"{os.path.basename(img_path).split('.')[0]}.npy"), bboxes)
+
 
         # Run reconstruction on all detected hands
         dataset = ViTDetDataset(model_cfg, img_cv2, boxes, right, rescale_factor=args.rescale_factor)
@@ -177,10 +188,10 @@ def main():
                 else:
                     final_img = np.concatenate([input_patch, regression_img], axis=1)
                 
-                if not os.path.exists(os.path.join(args.out_folder, "side_img")):
-                    os.makedirs(os.path.join(args.out_folder, "side_img"))
-                side_name = f'{img_fn}_{person_id}_side.png'
-                cv2.imwrite(os.path.join(os.path.join(args.out_folder, "side_img"), side_name), 255*side_img[:, :, ::-1])
+                if not os.path.exists(os.path.join(args.out_folder, "render")):
+                    os.makedirs(os.path.join(args.out_folder, "render"))
+                side_name = f'{img_fn}.png'
+                cv2.imwrite(os.path.join(os.path.join(args.out_folder, "render"), side_name), 255*side_img[:, :, ::-1])
                 
                 if not os.path.exists(os.path.join(args.out_folder, "final")):
                     os.makedirs(os.path.join(args.out_folder, "final"))

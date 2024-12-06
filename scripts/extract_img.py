@@ -16,7 +16,7 @@ def video_to_images(video_path, output_folder):
         if not ret: 
             break
 
-        output_path = os.path.join(output_folder, f"frame_{frame_count:04d}.jpg")
+        output_path = os.path.join(output_folder, f"{frame_count+1:06d}.png")
         cv2.imwrite(output_path, frame)
         print(f"Save to: {output_path}")
 

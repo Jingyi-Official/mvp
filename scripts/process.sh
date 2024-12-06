@@ -1,6 +1,7 @@
 #!/bin/bash
 # bash scripts/process-sequence.sh /mnt/ssd/jingyi/Projects/hamer/data/jingyi/jingyi.mp4
 # Check if path is specified as an argument
+
 if [ -z "$1" ]; then
   echo "Please specify the path to the folder containing the data."
   exit 1
@@ -12,61 +13,58 @@ if [ ! -d "$1" ]; then
   exit 1
 fi
 
-#check the number of hands
-if [ -z "$2" ]; then
-  echo "Please provide the number of hands."
-  exit 1
-fi
-
-n_hands="$2"
 path=$(readlink -f "$1")
 parent_dir=$(dirname "$path")
 project_dir=$(dirname "$parent_dir")
 echo $path # /mnt/ssd/jingyi/Projects/hamer/data/jingyi
 echo $parent_dir # /mnt/ssd/jingyi/Projects/hamer/data
 echo $project_dir # /mnt/ssd/jingyi/Projects/hamer
-echo "Number of hands: $n_hands"
 
-# Run crop
-if [ ! -f "$path" ]; then
-  echo "Running crop.py in $path"
-  python3 $project_dir/scripts/crop.py --input_video $path/video.mp4 --output_video $path/video_crop.mp4
-fi
 
-# Run image extraction
-if [ ! -f "$path" ]; then
-  echo "Running extract_img.py in $path"
-  python3 $project_dir/scripts/extract_img.py --video_path $path/video_crop.mp4 --output_folder $path/images
-fi
+# # # # Run crop
+# if [ ! -f "$path" ]; then
+#   echo "Running crop.py in $path"
+#   python3 $project_dir/scripts/crop.py --input_video $path/video.mp4 --output_video $path/video_crop.mp4
+# fi
 
-# Run hamer
-if [ ! -f "$path" ]; then
-  echo "Running hamer in $path"
-  python3 $project_dir/demo.py --img_folder $path/images --out_folder $path --batch_size=48 --side_view --save_mesh --full_frame
-fi
+# # # # # Run image extraction
+# if [ ! -f "$path" ]; then
+#   echo "Running extract_img.py in $path"
+#   python3 $project_dir/scripts/extract_img.py --video_path $path/video_crop.mp4 --output_folder $path/image
+# fi
 
-# Run mask extraction
+# # # # # Run hamer
+# if [ ! -f "$path" ]; then
+#   echo "Running hamer in $path"
+#   python3 $project_dir/demo.py --img_folder $path/image --out_folder $path --batch_size=48 --side_view --save_mesh --full_frame
+# fi
+
+# # Run mask extraction
 if [ ! -f "$path" ]; then
   echo "Running extract_mask.py in $path"
-  python3 $project_dir/scripts/extract_mask.py --input_dir $path/images --output_dir $path/masks --n_hands $n_hands
+  python3 $project_dir/scripts/extract_mask.py --input_dir $path/image --output_dir $path/back --n_hands 1
 fi
 
-# if [ ! -d "$path/masks" ]; then
-#   echo "Running mask in $path"
-#   python scripts/custom/run-sam.py --data_dir $path
-#   # python scripts/custom/run-rvm.py --data_dir $path
-#   python scripts/custom/extract-largest-connected-components.py --data_dir $path
-# fi
+# # # run point cloud
+if [ ! -f "$path" ]; then
+  echo "Running extract_pc.py in $path"
+  python3 $project_dir/scripts/extract_pc.py --input_dir $path/mesh --output_dir $path/uv 
+fi
 
-# if [ ! -f "$path/poses.npz" ]; then
-#   python scripts/custom/run-romp.py --data_dir $path
-# fi
+# # run normal
+# # if [ ! -f "$path" ]; then
+# #   echo "Running extract_normal.py in $path"
+# #   python3 $project_dir/scripts/extract_normal.py --input_dir $path/mesh --output_dir $path/normal 
+# # fi
 
-# if [ ! -f "$path/poses_optimized.npz" ]; then
-#   echo "Refining SMPL..."
-#   python scripts/custom/refine-smpl.py --data_dir $path --gender $2 # --silhouette
-# fi
+# # run overlapping
+if [ ! -f "$path" ]; then
+  echo "Running hamer in $path"
+  python3 $project_dir/demo_blur.py --img_folder $path/image --out_folder $path --batch_size=48 --side_view --save_mesh --full_frame
+fi
 
-# if [ ! -f "$path/output.mp4" ]; then
-#   python scripts/visualize-SMPL.py --path $path --gender $2 --pose $path/poses_optimized.npz --headless --fps 1
+# run skeloton ===========================
+# if [ ! -f "$path" ]; then
+#   echo "Running extract_skeloton.py in $path"
+#   python3 $project_dir/scripts/extract_skeloton.py --input_dir $path/keypoints --output_dir $path/skeloton --size 1536
 # fi
